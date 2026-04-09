@@ -1,0 +1,89 @@
+.img-preview {
+    width: 256px;
+    height: 256px;
+    position: relative;
+    border: 5px solid #F8F8F8;
+    box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.1);
+    margin-top: 1em;
+    margin-bottom: 1em;    
+}
+
+.img-preview>div {
+    width: 100%;
+    height: 100%;
+    background-size: 256px 256px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.upload-label{
+    display: inline-block;
+    padding: 12px 30px;
+    background: #39D2B4;
+    color: #fff;
+    font-size: 1em;
+    transition: all .4s;
+    cursor: pointer;
+}
+
+.upload-label:hover{
+    background: #34495E;
+    color: #39D2B4;
+}
+
+.loader {
+    border: 8px solid #f3f3f3; 
+    border-top: 8px solid #3498db; 
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+.modal-open {
+    overflow: hidden; 
+}
+
+.treatment-card-shadow {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.treatment-card-shadow:hover {
+    box-shadow: 0 10px 25px -5px rgba(5, 150, 105, 0.1);
+}
+
+#info-modal .animate-pop {
+    animation: modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modal-pop {
+    0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-backdrop-blur {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+}/* Subtle styling for the delete button */
+form button i {
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+form button:hover {
+    background-color: #fef2f2;
+}
+
+form button:hover i {
+    transform: scale(1.15);
+    color: #ef4444; /* Turns red only on hover */
+}

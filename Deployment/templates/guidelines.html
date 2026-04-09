@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guidelines | SmartCrop AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="bg-[#f0f4f1] font-sans text-gray-900">
+
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-72 bg-[#064e3b] text-white flex flex-col shadow-2xl h-screen">
+    <div class="p-8 text-3xl font-extrabold flex items-center gap-3">
+        <div class="bg-white p-2 rounded-lg"><i class="fas fa-leaf text-[#064e3b]"></i></div>
+        SmartCrop
+    </div>
+            <nav class="flex-1 px-6 space-y-4 mt-6">
+                <a href="{{ url_for('index') }}" class="flex items-center gap-3 px-4 py-3 hover:bg-green-800 rounded-xl transition text-green-100">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+                <a href="{{ url_for('history') }}" class="flex items-center gap-3 px-4 py-3 hover:bg-green-800 rounded-xl transition text-green-100">
+                    <i class="fas fa-history"></i> History
+                </a>
+                <a href="{{ url_for('consultations') }}" class="flex items-center gap-3 px-4 py-3 hover:bg-green-800 rounded-xl transition text-green-100">
+                     <i class="fas fa-video"></i> Booked Consulting</a>
+                </a>
+                <a href="{{ url_for('guidelines') }}" 
+   class="flex items-center gap-3 px-4 py-3 bg-[#059669] rounded-xl shadow-inner font-semibold transition text-white">
+    <i class="fas fa-book-open"></i> Guidelines
+</a>
+            </nav>
+            <div class="p-6 border-t border-green-800 mt-auto">
+                <div class="bg-green-900/50 p-3 rounded-lg text-[10px] uppercase tracking-widest text-green-400 font-bold text-center">
+                    System Status: Operational
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 px-10">
+                <h1 class="text-xl font-bold text-gray-800 italic">User Documentation</h1>
+            </header>
+
+            <div class="p-10 max-w-5xl mx-auto space-y-10">
+                
+                <div class="glass-card p-10 rounded-[40px] shadow-xl border border-white">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-green-600">
+                            <i class="fas fa-camera text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-black text-gray-800 tracking-tight">Best Results for Diagnosis</h2>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div class="space-y-2">
+                            <h3 class="font-bold text-green-700 flex items-center gap-2">
+                                <i class="fas fa-sun"></i> Proper Lighting
+                            </h3>
+                            <p class="text-sm text-gray-500 leading-relaxed">Use natural daylight. Avoid harsh shadows or dark rooms to ensure leaf details are visible.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <h3 class="font-bold text-blue-700 flex items-center gap-2">
+                                <i class="fas fa-expand-arrows-alt"></i> Focus & Zoom
+                            </h3>
+                            <p class="text-sm text-gray-500 leading-relaxed">Ensure the leaf is centered and fills about 70% of the frame for optimal AI pixel analysis.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-10 rounded-[40px] shadow-xl border border-white">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600">
+                            <i class="fas fa-microchip text-xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-black text-gray-800 tracking-tight">AI Technology Stack</h2>
+                    </div>
+                    <p class="text-gray-600 leading-relaxed mb-6">
+                        SmartCrop AI utilizes a <strong>Convolutional Neural Network (CNN)</strong> developed in <strong>TensorFlow</strong>. 
+                        The model analyzes spatial patterns in leaf pixels to identify 15 different crop conditions.
+                    </p>
+                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-xs font-bold uppercase tracking-widest border border-blue-100">
+                        <i class="fas fa-check-double"></i> Trained on 50,000+ Samples
+                    </div>
+                </div>
+
+                
+
+            </div>
+        </main>
+    </div>
+</body>
+</html>

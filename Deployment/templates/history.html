@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction History | SmartCrop AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .history-img { transition: transform 0.3s ease; }
+        .history-img:hover { transform: scale(1.1); }
+        #detailsModal { transition: opacity 0.3s ease-out; }
+    </style>
+</head>
+<body class="bg-[#f0f4f1] font-sans text-gray-900">
+
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-72 bg-[#064e3b] text-white flex flex-col shadow-2xl h-screen">
+            <div class="p-8 text-3xl font-extrabold flex items-center gap-3">
+                <div class="bg-white p-2 rounded-lg"><i class="fas fa-leaf text-[#064e3b]"></i></div>
+                SmartCrop
+            </div>
+
+            <nav class="flex-1 px-6 space-y-4 mt-6">
+                <a href="{{ url_for('index') }}" class="flex items-center gap-3 px-4 py-3 hover:bg-green-800 rounded-xl transition text-green-100">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+               
+                <a href="{{ url_for('history') }}" class="flex items-center gap-3 px-4 py-3 bg-[#059669] rounded-xl shadow-inner font-semibold transition text-white">
+                    <i class="fas fa-history"></i> History
+                </a>
+
+                <a href="{{ url_for('consultations') }}" class="flex items-center gap-3 px-4 py-3 hover:bg-green-800 rounded-xl transition text-green-100">
+                    <i class="fas fa-video"></i> Booked Consulting
+                </a>
+                <a href="{{ url_for('guidelines') }}" class="flex items-center gap-3 px-4 py-3 hover:bg-green-800 rounded-xl transition text-green-100">
+                    <i class="fas fa-book-open"></i> Guidelines
+                </a>
+            </nav>
+
+            <div class="p-6 border-t border-green-800 mt-auto">
+                <div class="bg-green-900/50 p-3 rounded-lg text-[10px] uppercase tracking-widest text-green-400 font-bold">
+                    System Status: Operational
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex justify-between items-center px-10">
+                <h1 class="text-xl font-bold text-gray-800">Diagnostic Logs</h1>
+                <div class="text-sm font-semibold text-green-700 bg-green-100 px-4 py-2 rounded-full">
+                    Total Predictions: {{ predictions|length }}
+                </div>
+            </header>
+
+            <div class="p-10 max-w-6xl mx-auto">
+                <div class="glass-card border border-white rounded-3xl shadow-xl overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-100">
+                                <th class="p-6 text-xs uppercase tracking-wider font-bold text-gray-400">Date & Time</th>
+                                <th class="p-6 text-xs uppercase tracking-wider font-bold text-gray-400">Sample Image</th>
+                                <th class="p-6 text-xs uppercase tracking-wider font-bold text-gray-400">Detected Condition</th>
+                                <th class="p-6 text-xs uppercase tracking-wider font-bold text-gray-400 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            {% for record in predictions %}
+                            <tr class="hover:bg-green-50/40 transition-colors group">
+                                <td class="p-6 text-sm">
+                                    <p class="font-bold text-gray-700">{{ record.date_created.strftime('%b %d, %Y') }}</p>
+                                    <p class="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{{ record.date_created.strftime('%I:%M %p') }}</p>
+                                </td>
+
+                                <td class="p-6">
+                                    <div class="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
+                                        <img src="{{ record.image_path }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Leaf">
+                                    </div>
+                                </td>
+
+                                <td class="p-6">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-[10px] font-black uppercase tracking-wider border border-orange-100">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-orange-500 mr-2"></span>
+                                        {{ record.disease_name.replace('__', ' ') }}
+                                    </span>
+                                </td>
+
+                                <td class="p-6 text-center">
+                                    <div class="flex items-center justify-center gap-5">
+                                        <button 
+                                            onclick="openModal('{{ record.disease_name }}', '{{ record.image_path }}', '{{ record.id }}')"
+                                            class="text-[#059669] hover:text-[#064e3b] text-sm font-bold flex items-center gap-1.5 transition-colors">
+                                            <i class="fas fa-expand-alt text-[11px]"></i> View
+                                        </button>
+
+                                        <form action="{{ url_for('delete_log', id=record.id) }}" method="POST" onsubmit="return confirm('Permanently delete this diagnostic log?');" class="inline">
+                                            <button type="submit" class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-300 hover:bg-red-50 hover:text-red-500 transition-all duration-200">
+                                                <i class="fas fa-trash-alt text-sm"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="p-32 text-center text-gray-400 italic">No diagnostic records found yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="detailsModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-md" onclick="closeModal()"></div>
+        
+        <div class="relative flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden border border-white transform scale-100 transition-all">
+                
+                <div class="flex justify-between items-center p-8 border-b border-gray-50">
+                    <div>
+                        <span class="text-green-600 text-xs font-bold uppercase tracking-widest">Diagnostic Report</span>
+                        <h2 id="modalDiseaseName" class="text-3xl font-black text-gray-800">Disease Name</h2>
+                    </div>
+                    <button onclick="closeModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Analysis Sample</label>
+                        <div class="aspect-square rounded-3xl overflow-hidden border-4 border-gray-50 shadow-inner">
+                            <img id="modalImage" src="" class="w-full h-full object-cover">
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Treatment Plan</label>
+                        <div id="modalTreatment" class="space-y-3">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-6 flex justify-end gap-3">
+                    <button onclick="closeModal()" class="px-8 py-3 bg-[#064e3b] text-white rounded-2xl font-bold shadow-lg hover:bg-green-800 transition transform hover:-translate-y-1">
+                        Acknowledge
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cropCareDB = {
+            "Tomato Late Blight": ["Bio-Fungicide Spray", "Liquid Calcium Boost", "Remove Infected Foliage"],
+            "Corn Rust": ["Nutrient Pack (High K)", "Systemic Fungicide", "Improve Airflow"],
+            "Healthy": ["Regular Monitoring", "Nitrogen Fertilizer", "Clean Irrigation"],
+            "Apple Scab": ["Lime Sulfur Spray", "Fallen Leaf Removal", "Nutrient Pack B"]
+        };
+
+        function openModal(disease, imageSrc, recordId) {
+            try {
+                const modal = document.getElementById('detailsModal');
+                
+                document.getElementById('modalDiseaseName').innerText = disease.replace(/__/g, ' ');
+                document.getElementById('modalImage').src = imageSrc;
+
+                const treatmentContainer = document.getElementById('modalTreatment');
+                treatmentContainer.innerHTML = ''; 
+
+                const treatments = cropCareDB[disease] || ["Consult Expert", "Standard Nutrient Pack"];
+
+                treatments.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-2xl shadow-sm";
+                    div.innerHTML = `
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span class="text-sm font-bold text-gray-700">${item}</span>
+                    `;
+                    treatmentContainer.appendChild(div);
+                });
+
+                // Read booking memory
+                // Read SHARED booking memory
+                let bookedDiseases = [];
+                try {
+                    const stored = localStorage.getItem('bookedDiseases');
+                    if (stored) {
+                        bookedDiseases = JSON.parse(stored);
+                        if (!Array.isArray(bookedDiseases)) bookedDiseases = [];
+                    }
+                } catch (e) {
+                    bookedDiseases = [];
+                }
+
+                const bookLink = document.createElement('div');
+                const safeDisease = disease.trim();
+                const safeRecordId = recordId ? recordId.toString() : 'unknown';
+                
+                // Check if THIS DISEASE is already in the shared memory
+                if (bookedDiseases.includes(safeDisease)) {
+                    bookLink.className = "mt-6 p-4 bg-green-50 rounded-2xl border border-green-100 text-center";
+                    bookLink.innerHTML = `
+                        <div class="text-center">
+                            <p class="text-sm text-green-700 font-bold mb-1"><i class="fas fa-check-circle text-green-500"></i> Consultation Confirmed</p>
+                            <p class="text-xs text-green-600">Your appointment has been scheduled.</p>
+                        </div>
+                    `;
+                } else {
+                    bookLink.className = "mt-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center";
+                    bookLink.innerHTML = `
+                        <div id="booking-btn-container-${safeRecordId}">
+                            <p class="text-xs text-blue-600 font-bold mb-2 text-center uppercase tracking-widest">Need Professional Help?</p>
+                            <button type="button" onclick="showBookingForm('${safeRecordId}')" class="w-full bg-blue-600 text-white px-6 py-3 rounded-xl text-sm font-black hover:bg-blue-700 transition shadow-md">
+                                Book Expert Consultation
+                            </button>
+                        </div>
+                        
+                        <form id="booking-form-${safeRecordId}" action="/book_expert" method="POST" onsubmit="return handleBookingSubmit('${safeDisease}')" class="hidden text-left animate-pop">
+                            <label class="text-[10px] font-bold text-blue-800 uppercase tracking-wider block mb-1">Select Date & Time</label>
+                            <input type="datetime-local" name="expert-time" required class="w-full p-2 text-sm bg-white border border-blue-200 rounded-lg mb-3 outline-none focus:ring-2 focus:ring-blue-400">
+                            <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-bold shadow-md hover:bg-green-700 transition">
+                                Confirm Appointment
+                            </button>
+                        </form>
+                    `;
+                }
+                
+                treatmentContainer.appendChild(bookLink);
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                
+            } catch (err) {
+                console.error("View Button Error:", err);
+            }
+        }
+
+        function showBookingForm(recordId) {
+            document.getElementById(`booking-btn-container-${recordId}`).classList.add('hidden');
+            document.getElementById(`booking-form-${recordId}`).classList.remove('hidden');
+        }
+
+       function handleBookingSubmit(disease) {
+            try {
+                let booked = JSON.parse(localStorage.getItem('bookedDiseases')) || [];
+                if (!booked.includes(disease)) {
+                    booked.push(disease);
+                    localStorage.setItem('bookedDiseases', JSON.stringify(booked));
+                }
+            } catch (e) {
+                console.error("Could not save booking memory", e);
+            }
+            return true;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detailsModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        window.onkeydown = function(event) {
+            if (event.keyCode === 27) closeModal();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCrop AI | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .animate-pop { animation: pop 0.3s ease-out; }
+        @keyframes pop { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        input[type="radio"]:checked + div { border-color: #059669; background-color: #ecfdf5; }
+        input[type="radio"]:checked + div .radio-dot { background-color: #059669; }
+    </style>
+</head>
+<body class="bg-[#f0f4f1] font-sans text-gray-900">
+
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-72 bg-[#064e3b] text-white flex flex-col shadow-2xl h-screen">
+            <div class="p-8 text-3xl font-extrabold flex items-center gap-3">
+                <div class="bg-white p-2 rounded-lg"><i class="fas fa-leaf text-[#064e3b]"></i></div>
+                SmartCrop
+            </div>
+
+            <nav class="flex-1 px-6 space-y-4 mt-6">
+                <a href="{{ url_for('index') }}" class="flex items-center gap-3 px-4 py-3 bg-[#059669] rounded-xl shadow-inner font-semibold transition text-white">
+                    <i class="fas fa-th-large"></i> Dashboard
+                </a>
+                <a href="{{ url_for('history') }}" class="flex items-center gap-3 px-4 py-3 hover:bg-green-800 rounded-xl transition text-green-100">
+                    <i class="fas fa-history"></i> History
+                </a>
+                <a href="{{ url_for('consultations') }}" class="flex items-center gap-3 px-4 py-3 hover:bg-green-800 rounded-xl transition text-green-100">
+                    <i class="fas fa-video"></i> Booked Consulting
+                </a>
+                <a href="{{ url_for('guidelines') }}" class="flex items-center gap-3 px-4 py-3 hover:bg-green-800 rounded-xl transition text-green-100">
+                    <i class="fas fa-book-open"></i> Guidelines
+                </a>
+            </nav>
+
+            <div class="p-6 border-t border-green-800 mt-auto">
+                <div class="bg-green-900/50 p-3 rounded-lg text-[10px] uppercase tracking-widest text-green-400 font-bold">
+                    System Status: Operational
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200 p-4 flex justify-between items-center px-10">
+                <h1 class="text-xl font-bold text-gray-800">Crop Health Diagnostic</h1>
+                <div class="flex items-center gap-6">
+                    <div class="relative group cursor-pointer" id="cart-container">
+                        <div class="bg-gray-100 p-3 rounded-full hover:bg-gray-200 transition">
+                            <i class="fas fa-shopping-bag text-gray-700"></i>
+                        </div>
+                        <span id="cart-count" class="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full ring-2 ring-white">0</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-10 max-w-6xl mx-auto">
+
+                <div id="shipment-tracker" class="hidden mb-8 animate-pop">
+                    <div class="bg-white rounded-3xl p-6 border border-green-100 shadow-sm flex items-center gap-6">
+                        <div class="w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center text-2xl">
+                            <i class="fas fa-truck-fast"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-black text-gray-800 uppercase tracking-widest">Active Shipment</h4>
+                            <p class="text-xs text-gray-500">Your farm essentials are being processed.</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Status: <span class="text-green-600">On the way</span></p>
+                            <p class="text-lg font-mono font-black text-[#064e3b]" id="dash-tracking-id">SC-00000</p>
+                        </div>
+                        <button onclick="clearTracking()" class="text-gray-300 hover:text-red-500 transition px-2">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <section class="mb-12">
+                    <div class="glass-card border border-white rounded-3xl shadow-xl p-10 text-center">
+                        <h2 class="text-2xl font-bold mb-2">Identify Plant Disease</h2>
+                        <p class="text-gray-500 mb-8 italic">Upload a photo of the affected leaf for instant AI analysis and treatment options.</p>
+                        
+                       <form action="/predict" method="POST" enctype="multipart/form-data">
+                            <label for="file-input" id="drop-area" class="block border-2 border-dashed border-green-200 rounded-2xl p-12 hover:border-green-500 hover:bg-green-50/50 transition cursor-pointer relative overflow-hidden group">
+                                <i class="fas fa-cloud-upload-alt text-5xl text-green-500 mb-4 group-hover:-translate-y-2 transition-transform"></i>
+                                <p class="text-lg font-semibold text-gray-700" id="file-label">Drag and drop leaf image</p>
+                                <p class="text-sm text-gray-400">Supported: JPG, PNG, JPEG</p>
+                                <input type="file" name="file" id="file-input" class="hidden" required onchange="handleFileSelect(this)">
+                            </label>
+                            
+                            <button type="submit" id="analyze-btn" disabled onclick="startLoading()" class="mt-8 bg-gray-400 cursor-not-allowed text-white px-12 py-4 rounded-2xl font-bold shadow-lg transition-all flex items-center gap-2 mx-auto">
+                                <i class="fas fa-lock"></i> Please Upload a Leaf
+                            </button>
+                        </form>
+                    </div>
+
+                    <div id="loader" class="hidden mt-10 text-center animate-pulse">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-green-500 border-t-transparent mb-4"></div>
+                        <p class="text-green-800 font-bold uppercase tracking-widest text-xs">Processing via Neural Network...</p>
+                    </div>
+                </section>
+
+               {% if result and result != "" %}
+                <div class="animate-pop">
+                    <hr class="border-gray-300 mb-12">
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div class="lg:col-span-1 bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden self-start">
+                            <div class="bg-orange-500 p-4 text-white font-bold text-center text-sm uppercase tracking-tighter">
+                                Analysis Complete
+                            </div>
+                            <img src="{{ image_path }}" class="w-full h-64 object-cover" alt="Diagnostic Image">
+                            <div class="p-6">
+                                <h3 class="text-xs font-black text-gray-400 uppercase">Detection Result</h3>
+                                <p class="text-2xl font-extrabold text-[#064e3b] mt-1">{{ result }}</p>
+                                
+                                {% if 'healthy' in result.lower() %}
+                                    <div class="mt-4 flex items-center gap-2 text-sm text-green-700 font-bold bg-green-100 p-2 rounded-lg">
+                                        <i class="fas fa-check-circle"></i> Plant is Healthy!
+                                    </div>
+                                {% else %}
+                                    <div class="mt-4 flex items-center gap-2 text-sm text-red-600 font-bold bg-red-50 p-2 rounded-lg">
+                                        <i class="fas fa-exclamation-triangle"></i> Action Required
+                                    </div>
+                                {% endif %}
+                                </div>
+                        </div>
+
+                        <div class="lg:col-span-2">
+                            <div class="mb-10">
+                                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+                                    <i class="fas fa-stethoscope text-green-600"></i> Treatment Plan
+                                </h3>
+                                <div class="space-y-3">
+                                    <div onclick="openConsultation()" class="flex items-center gap-4 bg-white p-4 rounded-2xl border border-gray-100 hover:border-green-500 hover:shadow-md transition-all cursor-pointer group">
+                                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                        <div>
+                                            <p class="font-bold text-gray-800">Consult Expert</p>
+                                            <p class="text-xs text-gray-500">Book a Consultation</p>
+                                        </div>
+                                        <i class="fas fa-chevron-right ml-auto text-gray-300 group-hover:text-green-500 transition"></i>
+                                    </div>
+
+                                    <div onclick="showCure()" class="flex items-center gap-4 bg-white p-4 rounded-2xl border border-gray-100 hover:border-green-500 hover:shadow-md transition-all cursor-pointer group">
+                                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                        <div>
+                                            <p class="font-bold text-gray-800">Standard Nutrient Pack</p>
+                                            <p class="text-xs text-gray-500">View Cure Details</p>
+                                        </div>
+                                        <i class="fas fa-chevron-right ml-auto text-gray-300 group-hover:text-green-500 transition"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 class="text-2xl font-black text-gray-800 mb-6 flex items-center gap-3">
+                                <i class="fas fa-prescription-bottle-alt text-orange-500"></i> Recommended Cures
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                                    <div class="h-32 bg-gray-50 rounded-xl mb-4 flex items-center justify-center group-hover:bg-green-50 transition">
+                                        <i class="fas fa-bottle-droplet text-4xl text-green-600"></i>
+                                    </div>
+                                    <h4 class="font-bold text-gray-800">Advanced Bio-Fungicide</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Specialized for {{ result }}</p>
+                                    <div class="flex items-center justify-between mt-4">
+                                        <span class="text-xl font-black text-gray-900">₹549</span>
+                                        <button onclick="addToCart('Advanced Bio-Fungicide', 549)" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Add to Cart</button>
+                                    </div>
+                                </div>
+
+                                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                                    <div class="h-32 bg-gray-50 rounded-xl mb-4 flex items-center justify-center group-hover:bg-blue-50 transition">
+                                        <i class="fas fa-shield-virus text-4xl text-blue-600"></i>
+                                    </div>
+                                    <h4 class="font-bold text-gray-800">Nutrient Recovery Pack</h4>
+                                    <p class="text-xs text-gray-500 mt-1">Boosts leaf immunity</p>
+                                    <div class="flex items-center justify-between mt-4">
+                                        <span class="text-xl font-black text-gray-900">₹899</span>
+                                        <button onclick="addToCart('Nutrient Recovery Pack', 899)" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Add to Cart</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <section class="mt-16 mb-10 animate-pop">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-black text-gray-800 flex items-center gap-3">
+                            <i class="fas fa-store text-[#059669]"></i> Farm & Garden Essentials
+                        </h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                            <div class="h-24 bg-green-50/50 rounded-xl mb-4 flex items-center justify-center group-hover:bg-green-100 transition">
+                                <i class="fas fa-seedling text-3xl text-green-700"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-800 text-sm">Premium Organic Compost</h4>
+                            <p class="text-[11px] text-gray-500 mt-1">10kg • Enriches soil health</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <span class="text-lg font-black text-gray-900">₹350</span>
+                                <button onclick="addToCart('Organic Compost (10kg)', 350)" class="bg-[#059669] hover:bg-[#047857] text-white px-3 py-1.5 rounded-xl text-xs font-bold transition"><i class="fas fa-plus mr-1"></i> Add</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                            <div class="h-24 bg-blue-50/50 rounded-xl mb-4 flex items-center justify-center group-hover:bg-blue-100 transition">
+                                <i class="fas fa-spray-can text-3xl text-blue-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-800 text-sm">Neem Oil Extract</h4>
+                            <p class="text-[11px] text-gray-500 mt-1">500ml • Natural Pest Control</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <span class="text-lg font-black text-gray-900">₹220</span>
+                                <button onclick="addToCart('Neem Oil Extract (500ml)', 220)" class="bg-[#059669] hover:bg-[#047857] text-white px-3 py-1.5 rounded-xl text-xs font-bold transition"><i class="fas fa-plus mr-1"></i> Add</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                            <div class="h-24 bg-yellow-50/50 rounded-xl mb-4 flex items-center justify-center group-hover:bg-yellow-100 transition">
+                                <i class="fas fa-flask text-3xl text-yellow-600"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-800 text-sm">NPK Fertilizer Blend</h4>
+                            <p class="text-[11px] text-gray-500 mt-1">5kg • Balanced Nutrition</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <span class="text-lg font-black text-gray-900">₹450</span>
+                                <button onclick="addToCart('NPK Fertilizer (5kg)', 450)" class="bg-[#059669] hover:bg-[#047857] text-white px-3 py-1.5 rounded-xl text-xs font-bold transition"><i class="fas fa-plus mr-1"></i> Add</button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition group">
+                            <div class="h-24 bg-gray-50 rounded-xl mb-4 flex items-center justify-center group-hover:bg-gray-200 transition">
+                                <i class="fas fa-temperature-half text-3xl text-gray-700"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-800 text-sm">Soil Moisture Meter</h4>
+                            <p class="text-[11px] text-gray-500 mt-1">Digital • Prevents overwatering</p>
+                            <div class="flex items-center justify-between mt-4">
+                                <span class="text-lg font-black text-gray-900">₹699</span>
+                                <button onclick="addToCart('Soil Moisture Meter', 699)" class="bg-[#059669] hover:bg-[#047857] text-white px-3 py-1.5 rounded-xl text-xs font-bold transition"><i class="fas fa-plus mr-1"></i> Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div id="info-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+                    <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 animate-pop">
+                        <button onclick="closeInfoModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                        <div id="modal-content"></div>
+                    </div>
+                </div>
+
+                <div id="checkout-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);">
+                    <div class="relative bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-pop">
+                        <div class="bg-green-600 p-6 text-white flex justify-between items-center">
+                            <h3 class="text-xl font-bold"><i class="fas fa-lock mr-2"></i> Secure Checkout</h3>
+                            <button onclick="closeCheckout()" class="text-green-200 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+                        </div>
+                        
+                        <div class="p-8">
+                            <form id="checkout-form" onsubmit="processOrder(event)">
+                                <div class="mb-6">
+                                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">Delivery Details</h4>
+                                    <input type="text" placeholder="Full Name" required class="w-full p-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-green-500">
+                                    <textarea placeholder="Farm/Garden Full Address" required rows="2" class="w-full p-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-green-500"></textarea>
+                                    <input type="tel" placeholder="Phone Number" required pattern="[0-9]{10}" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-green-500">
+                                </div>
+
+                                <div class="mb-8">
+                                    <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">Payment Method</h4>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <label class="cursor-pointer relative block h-full">
+                                            <input type="radio" name="payment" value="upi" required class="peer hidden" checked>
+                                            <div class="h-full border-2 border-gray-200 rounded-xl p-4 transition-all flex flex-col items-center justify-center gap-2">
+                                                <div class="w-4 h-4 rounded-full border-2 border-gray-300 flex items-center justify-center absolute top-3 right-3">
+                                                    <div class="radio-dot w-2 h-2 rounded-full transition-colors"></div>
+                                                </div>
+                                                <i class="fas fa-mobile-screen text-2xl text-blue-500"></i>
+                                                <span class="font-bold text-sm text-gray-700 text-center">UPI / GPay</span>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="cursor-pointer relative block h-full">
+                                            <input type="radio" name="payment" value="cod" required class="peer hidden">
+                                            <div class="h-full border-2 border-gray-200 rounded-xl p-4 transition-all flex flex-col items-center justify-center gap-2">
+                                                <div class="w-4 h-4 rounded-full border-2 border-gray-300 flex items-center justify-center absolute top-3 right-3">
+                                                    <div class="radio-dot w-2 h-2 rounded-full transition-colors"></div>
+                                                </div>
+                                                <i class="fas fa-money-bill-wave text-2xl text-green-600"></i>
+                                                <span class="font-bold text-sm text-gray-700 text-center">Cash on Delivery</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full bg-orange-500 text-white py-4 rounded-xl font-bold hover:bg-orange-600 transition shadow-lg flex items-center justify-center gap-2">
+                                    <span id="checkout-btn-text">Place Order</span>
+                                </button>
+                            </form>
+
+                            <div id="order-success" class="hidden text-center py-6">
+                                <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                                    <i class="fas fa-check text-4xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-black text-gray-800 mb-2">Order Confirmed!</h3>
+                                <p class="text-gray-500 mb-6">Your agricultural supplies are on the way.</p>
+                                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 inline-block mb-6">
+                                    <p class="text-xs font-bold text-gray-400 uppercase">Tracking ID</p>
+                                    <p class="text-lg font-mono font-bold text-gray-800" id="tracking-id">SC-00000</p>
+                                </div>
+                                <button onclick="closeCheckout()" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-gray-800 transition">Return to Dashboard</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="cart-sidebar" class="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 flex flex-col">
+        <div class="p-4 border-b flex justify-between items-center bg-green-600 text-white">
+            <h2 class="text-xl font-bold italic">Your Treatment Bag</h2>
+            <button onclick="toggleCart()" class="hover:text-gray-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+        <div class="p-4 border-t bg-gray-50">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-gray-600 font-semibold">Total:</span>
+                <span id="cart-total" class="text-xl font-bold text-green-700">₹0</span>
+            </div>
+            <button onclick="openCheckout()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition shadow-lg">
+                Checkout Now
+            </button>
+        </div>
+    </div>
+
+    <div id="cart-overlay" onclick="toggleCart()" class="fixed inset-0 bg-black opacity-0 pointer-events-none transition-opacity duration-300 z-40"></div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('plantCart')) || [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCartUI();
+            checkTrackingStatus();
+            const cartBtn = document.getElementById('cart-container');
+            if(cartBtn) cartBtn.onclick = (e) => { e.preventDefault(); toggleCart(); };
+        });
+
+        function checkTrackingStatus() {
+            const trackId = localStorage.getItem('lastTrackingId');
+            const tracker = document.getElementById('shipment-tracker');
+            if (trackId && tracker) {
+                document.getElementById('dash-tracking-id').innerText = trackId;
+                tracker.classList.remove('hidden');
+            }
+        }
+
+        function clearTracking() {
+            localStorage.removeItem('lastTrackingId');
+            document.getElementById('shipment-tracker').classList.add('hidden');
+        }
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                const label = document.getElementById('file-label');
+                const area = document.getElementById('drop-area');
+                const btn = document.getElementById('analyze-btn'); 
+
+                label.innerText = "Selected: " + input.files[0].name;
+                area.classList.add('bg-green-100', 'border-green-600');
+                
+                btn.disabled = false;
+                btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                btn.classList.add('bg-[#059669]', 'hover:bg-[#047857]', 'shadow-green-900/20', 'active:scale-95');
+                btn.innerHTML = '<i class="fas fa-robot"></i> Run AI Analysis';
+            }
+        }
+
+        function startLoading() {
+            document.getElementById('loader').classList.remove('hidden');
+        }
+
+        function toggleCart() {
+            const sidebar = document.getElementById('cart-sidebar');
+            const overlay = document.getElementById('cart-overlay');
+            sidebar.classList.toggle('translate-x-full');
+            overlay.classList.toggle('opacity-50');
+            overlay.classList.toggle('pointer-events-none');
+        }
+
+        function addToCart(name, price) {
+            cart.push({ id: Date.now(), name: name, price: parseFloat(price) });
+            localStorage.setItem('plantCart', JSON.stringify(cart));
+            updateCartUI();
+            if(document.getElementById('cart-sidebar').classList.contains('translate-x-full')) toggleCart();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            localStorage.setItem('plantCart', JSON.stringify(cart));
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items-container');
+            const totalEl = document.getElementById('cart-total');
+            const counter = document.getElementById('cart-count');
+            container.innerHTML = '';
+            let total = 0;
+            if (cart.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 mt-10">Your bag is empty.</p>';
+            }
+            cart.forEach(item => {
+                total += item.price;
+                container.innerHTML += `<div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <div><p class="font-medium text-gray-800 text-sm">${item.name}</p>
+                    <p class="text-sm text-green-600 font-bold">₹${item.price}</p></div>
+                    <button onclick="removeFromCart(${item.id})" class="text-red-400 hover:text-red-600 transition"><i class="fas fa-trash-can"></i></button></div>`;
+            });
+            totalEl.innerText = `₹${total}`;
+            if(counter) counter.innerText = cart.length;
+        }
+
+        function openCheckout() {
+            if (cart.length === 0) {
+                alert("Please add items to your cart first!");
+                return;
+            }
+            toggleCart();
+            const totalAmount = document.getElementById('cart-total').innerText;
+            document.getElementById('checkout-btn-text').innerText = `Place Order • ${totalAmount}`;
+            document.getElementById('checkout-modal').classList.remove('hidden');
+        }
+
+        function processOrder(event) {
+            event.preventDefault();
+            const randomId = `SC-${Math.floor(10000 + Math.random() * 90000)}`;
+            localStorage.setItem('lastTrackingId', randomId);
+            document.getElementById('tracking-id').innerText = randomId;
+            
+            document.getElementById('checkout-form').classList.add('hidden');
+            document.getElementById('order-success').classList.remove('hidden');
+
+            cart = [];
+            localStorage.setItem('plantCart', JSON.stringify(cart));
+            updateCartUI();
+            checkTrackingStatus();
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkout-modal').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('checkout-form').classList.remove('hidden');
+                document.getElementById('order-success').classList.add('hidden');
+                document.getElementById('checkout-form').reset();
+            }, 300);
+        }
+
+        const diseaseCures = {
+            "Pepper__bell___Bacterial_spot": "Apply copper-based fungicides. Avoid overhead watering.",
+            "Potato___Early_blight": "Apply chlorothalonil. Rotate crops annually.",
+            "Potato___Late_blight": "Use Ridomil Gold immediately.",
+            "Tomato__Bacterial_spot": "Use copper sprays and keep foliage dry.",
+            "Tomato__healthy": "Plant is healthy! Maintain regular fertilization."
+        };
+
+        function showCure() {
+            const disease = "{{ result }}".trim();
+            const cure = diseaseCures[disease] || "Contact an agronomist for specific instructions.";
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `<div class="text-center">
+                <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-leaf text-2xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-gray-800 mb-2">Treatment Guide</h3>
+                <div class="bg-gray-50 p-6 rounded-2xl text-gray-700 text-left border border-gray-100 leading-relaxed">${cure}</div>
+                <button onclick="closeInfoModal()" class="mt-8 w-full bg-[#059669] text-white py-4 rounded-2xl font-bold">Acknowledge</button>
+            </div>`;
+            document.getElementById('info-modal').classList.remove('hidden');
+        }
+
+        function openConsultation() {
+            const disease = "{{ result }}".trim();
+            let bookedDiseases = JSON.parse(localStorage.getItem('bookedDiseases')) || [];
+            const content = document.getElementById('modal-content');
+
+            if (bookedDiseases.includes(disease)) {
+                content.innerHTML = `<div class="text-center">
+                    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-gray-800 mb-2">Consultation Confirmed</h3>
+                    <p class="text-gray-600 mb-6">Your expert appointment for this condition is already scheduled.</p>
+                    <button onclick="closeInfoModal()" class="w-full bg-[#059669] text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition">Close</button>
+                </div>`;
+            } else {
+                content.innerHTML = `<div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-video text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-gray-800 mb-2">Book an Expert</h3>
+                    <form action="/book_expert" method="POST" onsubmit="return handleGlobalBooking('${disease}')">
+                        <input type="datetime-local" name="expert-time" required class="w-full p-4 bg-gray-50 border rounded-2xl mb-4 outline-none">
+                        <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition">Confirm Appointment</button>
+                    </form>
+                </div>`;
+            }
+            document.getElementById('info-modal').classList.remove('hidden');
+        }
+
+        function handleGlobalBooking(disease) {
+            let booked = JSON.parse(localStorage.getItem('bookedDiseases')) || [];
+            if (!booked.includes(disease)) {
+                booked.push(disease);
+                localStorage.setItem('bookedDiseases', JSON.stringify(booked));
+            }
+            return true;
+        }
+
+        function closeInfoModal() { document.getElementById('info-modal').classList.add('hidden'); }
+    </script>
+</body>
+</html>
